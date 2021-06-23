@@ -1,0 +1,324 @@
+---
+title: "The Relationship Between Number of Sales and Taxable Value in Property Assessment"
+author: "Carolyn Logan"
+date: "6/23/2021"
+output: 
+  word_document: default
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+require("readxl")
+require("dplyr")
+require("stringi")
+require("ggplot2")
+require("broom")
+require("ggpubr")
+require("tinytex")
+require("pivottabler")
+```
+
+## Abstract
+
+Property tax assessments form the basis of the revenue stream for local and state jurisdictions in Kentucky.  These assessments should be levied in a fair and equitable manner by the county tax assessor.  Property transfers, or sales, from the open marketplace help determine taxable value, which should indicate fair market value.  This paper is interested in determining whether the number of times a property transfers has a statistically significant impact on that property’s tax assessment.  This researcher believes that a significant relationship does exist. 
+
+Data for this research was provided by a local tax assessor.  After perfunctory data cleaning and loading, multiple regression analysis was conducted using a variety of independent variables, including the number of times a property had sold.  The multiple regression indicated several times that this variable was statistically significant.  
+
+Currently, very little scholarly research exists on this topic.  Two similar studies were located and provide interesting insights.  These studies together with the results from this study’s regression analysis indicate additional research is warranted.  Considering the importance of property tax revenue, additional analysis for low turnover properties would be beneficial for taxing jurisdictions.  
+
+
+## Introduction
+
+In each of Kentucky's 120 counties, a tax assessor is elected to assess the real estate for tax purposes.  According to the Kentucky Constitution,  “All property, not exempted from taxation by this Constitution, shall be assessed for taxation at its fair cash value, estimated at the price it would bring at a fair voluntary sale; and any officer, or other person authorized to assess values for taxation, who shall commit any willful error in the performance of his duty, shall be deemed guilty of misfeasance, and upon conviction thereof shall forfeit his office, and be otherwise punished as may be provided by law” (Section 172, n.d.).  The tax assessor implements this statutory “fair cash value” requirement in a process called reassessment or revaluation.  The assessor analyzes data about properties that have sold.  At the same time, the assessor attempts to verify the information on file about the unsold properties.  Then, the analysis is used to assign new values to all unsold properties.  
+
+The valuation cycle happens every four years, each time with a new set of sales to analyze.  Theoretically, after a reassessment occurs, all the properties are assessed at "fair cash value" (section 172, n.d.).  Whereas the values computed by the local tax assessor are simply an estimate (Section 172, n.d.), each time a property sells, it is valued accurately by the local real estate market.  Properties that rarely sell (low turnover properties) are not exposed to the accuracy of the local real estate market.  Instead, they are repeatedly valued with the assessor’s estimate.  Subsequently, low turnover properties may not be assessed as accurately as their counterparts with higher turnover.  
+
+Since property taxes are directly calculated from property assessments, fair and equitable tax assessments help ensure that the tax burden is distributed evenly.  Incorrect property tax assessments cause several problems.  First, incorrect assessments lead to inappropriate revenue streams for the taxing jurisdictions.  Second, erroneous tax values shift tax burden to accurately assessed properties.  Third, flawed tax assessments perpetuate every quadrennial cycle.  Finally, incorrect assessments leave the tax assessor open to charges of malfeasance.        
+
+This paper will analyze the relationship between the number of times a property has sold and that property’s tax assessment (“value”).  Further analysis will be performed using basic characteristics about the homes such as age and size.  Based on anecdotal evidence, this researcher believes there is a significant relationship between the number of times a home has sold and its tax value.  
+
+
+
+## Literature Review
+This researcher struggled to locate literature that compared taxable value and the number of times a property experienced turnover.  Two similar studies were located that highlight interesting results.  Even when a home’s previous price was purposely misstated, that previous price did have an impact on the future market value of the property (Brint, 2009).  Although this study was conducted from the buyer’s viewpoint, the tax assessor may be similarly influenced.  Considering that the last sale may have occurred decades ago, this bias would result in undervaluing low turnover properties.  Additionally, low turnover properties may need repairs and maintenance.  The costs to repair a home have significant impact on the home’s selling price (Knight et al, 2000) or market value.  This underscores the need for the tax assessor to scrutinize and document the condition of all properties, especially low turnover properties, during the analysis phase of revaluation.  
+
+The lack of research on this question and the importance of property assessments points to the need for additional research.  This researcher will analyze the relationship between the assessed value and the number of times a property has transferred.  
+
+## Research Quesion
+
+Specifically, this study will explore the question:  
+
+* Is there a relationship between the number of times a property has sold and its assessed value?
+
+## Theory
+
+This project will use the null hypothesis and alternative hypothesis as stated below.  
+H0:  There is no relationship between the number of times a property has sold and its assessed value.  
+H1:  A relationship exists between the number of times a property has sold and its assessed value.  
+
+The research indicates that a previous sale price has an impact on the next sale price (Brint, 2009).  Since assessed value is defined as “fair cash value” (Section 172, n.d.), prior sale price may impact future tax value.  Research also suggests that a set of needed home repairs put downward pressure on sales price (Knight et al, 2000).  Thus, the fewer times a property has sold may indicate the presence of necessary repairs, which would cause lower prices.  
+
+This researcher expects to find a significant relationship between the number of times a property has sold and its tax assessment, based on anecdotal evidence.  First, it is commonplace to see these low turnover homes sell for lower values than their higher turnover counterparts.  Speculatively, this may be caused by deferred repairs or maintenance.  Second, it is not unusual to encounter 30% differences between the assessed values of these two groups of homes, in this researcher’s experience.   
+
+## Data
+
+The dataset for this project was furnished by the public assessor’s office.  There are three excel datasets:  sales, assessed values, and dwelling characteristics.  The sales dataset contains sales dates and prices for single-family homes.  The assessed values dataset contains recent assessed values.  The characteristics dataset includes a set of standard information, including the size of the home and the year the home was built.  Each property has been assigned a proprietary key by the assessor’s internal procedures.  The files range in size from 80,000 rows to 164,000 rows.   
+  
+The dwelling characteristic data set included the following information.  
+ 
+```{r echo=FALSE}
+#Load the 3 data sets.  
+#Dwelling data set contains characteristics about the dwellings
+dwelling <- read_excel("Dwelling_Data.xlsx")
+#show the first 6 rows of data
+head(dwelling)
+```
+The sales data set contained the following elements.  
+
+```{r echo=FALSE}
+#Sales data set contains the sales information
+sales <- read_excel("Sales_For_SFD.xlsx")
+#Show the first 6 rows of data
+head(sales)
+```
+The assessment data set contained the following information.  
+
+```{r echo=FALSE}
+#Assessment data set contains the tax assessments 
+assessment <-read_excel("Assessment_Data.xlsx")
+
+#Show the irst 6 rows of data
+head(assessment)
+```
+First, the data was loaded into a data frame for processing.  
+
+```{r echo=FALSE}
+#Load first data set into a dataframe.  
+DF1 <- data.frame(dwelling)
+#show the first 6 rows of data
+head(DF1)
+```
+Before loading the assessment data set into this data frame, the number of rows for each individual data set was checked.  The new data frame contained 81,234 rows while the assessment data set contained 81,154 rows.  The merge function was used to merge the assessment data set with the dwelling data frame by joining on the unique key.  
+```{r echo=FALSE}
+#next is to combine dwelling and assessment information
+#count the number of rows first
+nrow(DF1)#81234
+nrow(assessment) #81154
+#try an inner join to match these two dataframes since their row counts are not equal
+merge1 <- merge(assessment, DF1, by = 'PARID', all = FALSE) 
+dim(merge1) #81,213
+```
+The resulting data frame contained 81,213 rows and the fields shown below.  
+
+```{r echo=FALSE}
+head(merge1) #assessment and dwelling
+
+```
+The data frame contained columns of data that will not be used in the analysis.  These columns are deleted and the edited data frame now contains the following information from the dwelling and assessment data sets.  
+```{r echo=FALSE}
+#delete columns I'm not using
+merge1 <- select(merge1, -c(2, 4, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19))
+head(merge1)
+nrow(merge1) #81,213
+```
+The sales data set contained multiple transactions for many of the unique properties.  Since the analysis of this paper is based on the number of sales, the sales data set is merged with the data frame, joining again on the unique identifier.  Then, a count variable is created.  This variable counts the number of times a unique identifier occurs in the data set.  The final data frame contains the elements shown and the new variable, sales_counts.  There are now 164,457 rows.  
+
+```{r}
+
+#begin counting the number of sales per parid
+nrow(sales) #164,457
+DF <- merge(merge1, sales, by = 'PARID', all = FALSE) #this merges sales with the rest of data files 
+#and puts together with merge1 (dwelling + assessment)
+head(DF) 
+nrow(DF)#verifying row count 164,457
+DF <- add_count(DF, PARID, name = "sales_count") 
+head(DF)
+nrow(DF) #164,457
+#DF is the DF that contains all my data.
+```
+Any columns not needed for the analysis are deleted.  The data frame now contains:  
+```{r echo=FALSE}
+
+#get rid of more columns I don't need
+DF <- select(DF, -c(5, 6, 7, 8, 10 ))
+head(DF)
+#Begin Renaming Columns I will keep
+DF <- rename(DF, Value = VAL03, Area = SFLA, Price = PRICE)
+head(DF)
+
+```
+The data provider requested that the unique identifier be replaced or masked.  A randomized string containing ten characters was created and added to the data frame as a new variable named "UniqueKey". The result is shown below.     
+```{r}
+#generate random string to use as unique key.  
+DF <- DF %>% mutate( UniqueKey = do.call(paste0, Map(stri_rand_strings, n=nrow(DF), length=c(5, 4, 1),
+                                                  pattern = c('[A-Z]', '[0-9]', '[A-Z]'))))
+head(DF)  
+```
+A new data frame called TheKeys was created to preserve the relationship between the unique key provided with the data and the randomized character string.  
+
+```{r echo=FALSE}
+TheKeys <- data.frame(DF$PARID, DF$UniqueKey) #this is the match between random generated unique key and parid
+head(TheKeys)
+tail(TheKeys)
+head(DF)
+nrow(DF) #164,587
+###Now I have parid, new_col2 (fake parid) joined. 
+```
+Next, multiple occurrences of the provided unique key were deleted from the data frame, which reduced the number of rows to 70,081 unique events.  
+
+```{r}
+#Delete the multiple rows based on parid.  
+DF <- DF[!duplicated(DF$PARID),]  #this deletes duplicate rows that came from sales table
+head(DF)
+nrow(DF) #70,081
+
+```
+Per the agreement with the data provider, the unique key "PARID" was deleted from the data set.  The result is shown below.  
+
+```{r}
+#Final set of transformations
+#Delete PARID
+DF <- select(DF, -PARID)
+head(DF)
+```
+One of the final transformations is to change the assessor's data element called "YRBLT", the year the home was built, to age by subtracting YRBLT from 2021.  The name of the column was also changed.  The final transformed data frame is shown below.  
+```{r echo=FALSE}
+
+#Transform YRBLT to Age
+DF$YRBLT <- (2021 - DF$YRBLT)
+DF <- rename(DF, Age = YRBLT)
+head(DF)
+
+```
+The descriptive statistics for the final data frame are below.  
+```{r echo = FALSE}
+summary(DF)
+```
+
+## Methodology
+
+Once the data was cleaned and loaded into one data frame, preparation for analysis began.  First, the data structure was reviewed as well as the summary statistics.   
+
+```{r echo=FALSE}
+#check the DF structure and review the descriptive statistics
+str(DF)
+summary(DF)
+```
+Next,  the taxable values were reviewed in a histogram.  
+```{r echo=FALSE}
+#although we don't need to check for normal distribution for multiple
+#regression analysis, here is a histogram of the values column
+hist(DF$Value)
+```
+Next,  the sales_count variable was displayed in a histogram.  
+```{r echo=FALSE}
+#although we don't need to check for normal distribution for multiple
+#regression analysis, here is a histogram of the sales_count
+hist(DF$sales_count)
+```
+The sales_count and taxable values were plotted on a scatter plot.  
+```{r echo=FALSE}
+#the scatter plot helps indicate the variable sales_count is not continuous
+plot(Value  ~ sales_count, data = DF)
+```
+Several regression models were built and reviewed.  The first regression model was created using simple regression.  Here, the relationship between the dependent variable taxable value and sales_count is explored.  The summary of the regression coefficients is shown below.  
+
+```{r}
+#ran simple regression using sales_count as independent variable, value as dependent
+simple_regression <- lm(Value ~ sales_count, data = DF) #r2 = 0.0015
+summary(simple_regression)
+
+```
+Since the R-Squared value was insignificant, multiple regression models were built.  The first multiple regression analysis uses taxable value as the dependent variable.  The number of times a property sold (sales_count) and the age of the home were the independent variables.  The summary is shown below.  
+
+```{r}
+#first multiple regression
+#Value is dependent variable, sales_count + Age are independent variables
+multiple_regression <- lm(Value ~ sales_count + Age, data = DF) #r2 = .0.02607
+summary(multiple_regression)
+```
+The second mulitple regression model again uses taxable value as the dependent variable.  The independent variables selected for this analysis were sales_count and the living area of the home.  The summary of this analysis is shown below.  
+
+```{r}
+#second multiple regression
+#value is dependent variable, sales_count + area are independent variables
+MR_Sales_Area <- lm(Value ~ sales_count + Area, data = DF) #r2 = 0.7255
+summary(MR_Sales_Area)
+
+```
+A third and final multiple regression model was built by adding the variable Age to the second model.  Again the dependent variable is taxable value.  The independent variables are sales_count, Age, and Area.  The summary of this analysis is shown below.  
+
+```{r}
+#third multiple regression
+#values is dependent variable, sales_count + Area + Age are independent variables
+MR_sales_Area_Age <- lm(Value ~ sales_count + Area + Age, data = DF) #r2 = .7268
+summary(MR_sales_Area_Age)
+
+```
+
+The chart summarizes the various values of R-Squared calculated by the regression models.    
+```{r}
+#input the r^2 values
+rSquare <- c(0.001599, 0.02607, 0.7255, 0.727)
+#this will be the titles
+rModel <- c("Simple Regression", "Sales_Count + Age", "Sales_count + Area", "Sales_Count + Age + Area")
+#make a data frame
+RSquareDF <- data.frame("Regression Model" =rModel, "R-Square Value" = rSquare)
+head(RSquareDF)
+
+#Pivot Table of tallies by Sales_count
+pivot_tally <- DF %>%
+    select(sales_count)%>%
+    group_by(sales_count) %>%
+    summarise(TotalSales = sum(sales_count))
+pivot_tally
+
+```
+## Results
+Of the four regression models that were run on this dataset, two indicated a statistically significant relationship between assessed value and number of times a property sold.  Both of those models included sales_count and Area.  The R-Squared value for these models was 0.7255 and 0.727, which indicates a strong, positive relationship exists between sales_count and assessed value.  
+
+The coefficients from the regression model indicate that These are summarized in the chart below.  
+
+```{r echo = FALSE}
+####################insert 2 charts here#######################
+
+```
+The chart below summarizes the F statistic and its p-value for each of the two multiple regression models with significant R-Squared statistics from this analysis.    
+
+```{r echo =FALSE}
+#FStatSimple <- c("112.3 on 1 and 70079 DF,  p-value: < 2.2e-16") #sales count only
+FStatMR1 <- c("937.8 on 2 and 70078 DF,  p-value: < 2.2e-16") #sales count + age
+
+FStatMR3 <- c("6.22e+04 on 3 and 70069 DF,  p-value: < 2.2e-16")  #sales count + area + age
+
+ModelsFstat <- c("Sales_Count + Age", "Sales_count + Area", "Sales_Count + Age + Area")
+
+FStatDF <- data.frame(rModel, FStatMR3, FStatMR3)
+head(FStatDF)
+```
+Since the p-values of both F-Statistics are less than 0 (p-value = 2.2e-16), both of these models are statistically significant.  Thus, the null hypothesis ("There is no relationship between the number of times a property has sold and its assessed value.") is rejected in favor of the alternative hypothesis, which stated that there such a relationship does exist.  
+## Implications
+
+Given the constitutional mandate for “all property” to be assessed at “fair cash value” (Section 172, n.d.), these results raise questions for further study.  Several interesting topics are immediately evident:  Do low turnover homes have lower assessed values than medium or high turnover homes?  Is there a geographic variable that may be impacting the assessed value for low turnover homes.   Can the “drag” on assessed value be estimated or even predicted based on the number of years since the last sale?  
+
+Further research should also be conducted on larger data sets.  Purposefully, the sales data set used by this study included only one type of sales transaction.  In addition, the sales data set was missing several decades (missing dates are prior to 1950) of historical sales.
+
+Finally, further research should be conducted with a geographic variable.  Location is one of the primary influencers for a residential property purchaser.  Location was not included in this study.  
+
+## Conclusion
+
+The purpose of this research was to answer the question, “Is there a relationship between the number of times a property has sold and its tax assessment?”.  This researcher theorized that the relationship existed.  
+
+The analysis began with three data files from the local tax assessor’s office.  The analysis included creating a variable that counted the number of times each property had sold.  Subsequently, several multiple regression analyses were performed.  The multiple regression R-Squared values indicated a strong, positive relationship between assessed value and the number of times a property had sold.  Moreover, the F-statistic and its p-value indicate that both regression models are statistically significant.  
+
+
+# References
+
+Brint, A. (2009). Predicting a house’s selling price through inflating its previous selling price. Journal of the Operational Research Society, 60(3), 339–347. https://doi.org/10.1057/palgrave.jors.2602567
+
+Knight, J., Miceli, T., & Sirmans, C. (2000). Repair Expenses, Selling Contracts and House Prices. Journal of Real Estate Research, 20(3), 323–336. https://doi.org/10.1080/10835547.2000.12091040
+
+Section 172. (n.d.). https://apps.legislature.ky.gov/law/constitution. 
+
